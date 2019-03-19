@@ -1,0 +1,146 @@
+diff -Naur --exclude '*bin' --exclude '*map' --exclude '*elf' --exclude '*pmecc' at91bootstrap3-v3.8.7/board/at91sam9x5ek/at91sam9x5ek.c at91bootstrap3-v3.8.7-new/board/at91sam9x5ek/at91sam9x5ek.c
+--- at91bootstrap3-v3.8.7/board/at91sam9x5ek/at91sam9x5ek.c	2016-10-10 11:19:43.000000000 -0400
++++ at91bootstrap3-v3.8.7-new/board/at91sam9x5ek/at91sam9x5ek.c	2019-03-19 15:51:09.742096918 -0400
+@@ -67,15 +67,17 @@
+ /* Using the Micron MT47H64M16HR-3 */
+ static void ddramc_reg_config(struct ddramc_register *ddramc_config)
+ {
+-	ddramc_config->mdr = (AT91C_DDRC2_DBW_16_BITS
+-			| AT91C_DDRC2_MD_DDR2_SDRAM);
++	//DHeyman : changed to LPR -SDRAM and 32 bit bus width
++	ddramc_config->mdr = (AT91C_DDRC2_DBW_32_BITS
++			| AT91C_DDRC2_MD_LP_SDR_SDRAM);
+ 
+ 	ddramc_config->cr = (AT91C_DDRC2_NC_DDR10_SDR9 /* 10 column bits(1K) */
+ 			| AT91C_DDRC2_NR_13              /* 13 row bits (8K) */
+ 			| AT91C_DDRC2_CAS_3              /* CAS Latency 3 */
+-			| AT91C_DDRC2_NB_BANKS_8         /* 8 banks */
++			| AT91C_DDRC2_NB_BANKS_4         /* 8 banks */		//DHeyman: changed to 4 banks
+ 			| AT91C_DDRC2_DLL_RESET_DISABLED /* DLL not reset */
+-			| AT91C_DDRC2_DECOD_INTERLEAVED);/*Interleaved decode*/
++			| AT91C_DDRC2_DECOD_SEQUENTIAL);	
++			//| AT91C_DDRC2_DECOD_INTERLEAVED);/*Interleaved decode*/	//DHeyman: removed because should be sequential
+ 
+ 	/*
+ 	 * Make sure to uncomment the following line if the DDR controller
+@@ -90,7 +92,7 @@
+ 	 * register). Only the DDR controller function is thus used on lower
+ 	 * EBI data lines.
+ 	 */
+-	//ddramc_config->cr |= AT91C_DDRC2_EBISHARE;       /* DQM is shared with other controller */
++	ddramc_config->cr |= AT91C_DDRC2_EBISHARE;       /* DQM is shared with other controller */
+ 
+ 
+ 	/*
+@@ -138,7 +140,7 @@
+ 	csa |= AT91C_EBI_CS1A_SDRAMC;
+ 	csa &= ~AT91C_EBI_DBPUC;
+ 	csa |= AT91C_EBI_DBPDC;
+-	csa |= AT91C_EBI_DRV_HD;
++	//csa |= AT91C_EBI_DRV_HD;
+ 
+ 	writel(csa, AT91C_BASE_CCFG + CCFG_EBICSA);
+ 
+@@ -276,6 +278,23 @@
+ 		{"NANDALE",	CONFIG_SYS_NAND_ALE_PIN,	0, PIO_PULLUP, PIO_PERIPH_A},
+ 		{"NANDCLE",	CONFIG_SYS_NAND_CLE_PIN,	0, PIO_PULLUP, PIO_PERIPH_A},
+ 		{"NANDCS",	CONFIG_SYS_NAND_ENABLE_PIN,	1, PIO_PULLUP, PIO_OUTPUT},
++		//DHeyman: added to configure pins for SDRAM (wrong place, but eh)		
++		{"D16",	AT91C_PIN_PD(6), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D17",	AT91C_PIN_PD(7), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D18",	AT91C_PIN_PD(8), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D19",	AT91C_PIN_PD(9), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D20",	AT91C_PIN_PD(10), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D21",	AT91C_PIN_PD(11), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D22",	AT91C_PIN_PD(12), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D23",	AT91C_PIN_PD(13), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D24",	AT91C_PIN_PD(14), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D25",	AT91C_PIN_PD(15), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D26",	AT91C_PIN_PD(16), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D27",	AT91C_PIN_PD(17), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D28",	AT91C_PIN_PD(18), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D29",	AT91C_PIN_PD(19), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D30",	AT91C_PIN_PD(20), 0, PIO_PULLUP, PIO_PERIPH_A},
++		{"D31",	AT91C_PIN_PD(21), 0, PIO_PULLUP, PIO_PERIPH_A},
+ 		{"D0",	AT91C_PIN_PD(6), 0, PIO_PULLUP, PIO_PERIPH_A},
+ 		{"D1",	AT91C_PIN_PD(7), 0, PIO_PULLUP, PIO_PERIPH_A},
+ 		{"D2",	AT91C_PIN_PD(8), 0, PIO_PULLUP, PIO_PERIPH_A},
+@@ -298,7 +317,7 @@
+ 
+ 	reg = readl(AT91C_BASE_CCFG + CCFG_EBICSA);
+ 	reg |= AT91C_EBI_CS3A_SM;
+-	if (get_cm_rev() == 'A')
++	if (get_cm_rev() == 'B')
+ 		reg &= ~AT91C_EBI_NFD0_ON_D16;
+ 	else
+ 		reg |= (AT91C_EBI_DDR_MP_EN | AT91C_EBI_NFD0_ON_D16);
+@@ -325,13 +344,13 @@
+ 
+ 	writel((AT91C_SMC_READMODE
+ 		| AT91C_SMC_WRITEMODE
+-		| AT91C_SMC_NWAITM_NWAIT_DISABLE
++		//| AT91C_SMC_NWAITM_NWAIT_DISABLE
+ 		| AT91C_SMC_DBW_WIDTH_BITS_8
+ 		| AT91_SMC_TDF_(1)),
+ 		AT91C_BASE_SMC + SMC_CTRL3);
+ 
+ 	/* Configure the PIO controller */
+-	if (get_cm_rev() == 'A')
++	if (get_cm_rev() == 'B')
+ 		pio_configure(nand_pins_lo);
+ 	else
+ 		pio_configure(nand_pins_hi);
+diff -Naur --exclude '*bin' --exclude '*map' --exclude '*elf' --exclude '*pmecc' at91bootstrap3-v3.8.7/board/at91sam9x5ek/at91sam9x5eknf_uboot_defconfig at91bootstrap3-v3.8.7-new/board/at91sam9x5ek/at91sam9x5eknf_uboot_defconfig
+--- at91bootstrap3-v3.8.7/board/at91sam9x5ek/at91sam9x5eknf_uboot_defconfig	2016-10-10 11:19:43.000000000 -0400
++++ at91bootstrap3-v3.8.7-new/board/at91sam9x5ek/at91sam9x5eknf_uboot_defconfig	2019-03-19 16:21:11.095346521 -0400
+@@ -1,9 +1,13 @@
+ CONFIG_AT91SAM9X5EK=y
+-CONFIG_RAM_128MB=y
++# CONFIG_RAM_128MB is not set
++CONFIG_RAM_64MB=y
+ CONFIG_NANDFLASH=y
+ # CONFIG_PMECC_AUTO_DETECT is not set
+ # CONFIG_NANDFLASH_RECOVERY is not set
+ CONFIG_DEBUG=y
+-CONFIG_THUMB=y
++# CONFIG_THUMB is not set
+ CONFIG_SCLK=y
+ CONFIG_LOAD_ONE_WIRE=y
++# CONFIG_PMECC_CORRECT_BITS_2 is not set
++CONFIG_PMECC_CORRECT_BITS_4=y
++CONFIG_IMG_ADDRESS="0x01000000"
+diff -Naur --exclude '*bin' --exclude '*map' --exclude '*elf' --exclude '*pmecc' at91bootstrap3-v3.8.7/Config.in.kernel at91bootstrap3-v3.8.7-new/Config.in.kernel
+--- at91bootstrap3-v3.8.7/Config.in.kernel	2016-10-10 11:19:43.000000000 -0400
++++ at91bootstrap3-v3.8.7-new/Config.in.kernel	2019-03-19 16:10:29.375143510 -0400
+@@ -51,7 +51,7 @@
+ 	string "Flash Offset for Linux Kernel Image"
+ 	default "0x00200000" if CONFIG_FLASH
+ 	default "0x00040000" if CONFIG_DATAFLASH
+-	default "0x00200000" if CONFIG_NANDFLASH
++	default "0x03000000" if CONFIG_NANDFLASH		#DHeyman: Changed from 0x00200000
+ 	default	"0x00000000" if CONFIG_SDCARD
+ 	help
+ 
+diff -Naur --exclude '*bin' --exclude '*map' --exclude '*elf' --exclude '*pmecc' at91bootstrap3-v3.8.7/Config.in.u-boot at91bootstrap3-v3.8.7-new/Config.in.u-boot
+--- at91bootstrap3-v3.8.7/Config.in.u-boot	2016-10-10 11:19:43.000000000 -0400
++++ at91bootstrap3-v3.8.7-new/Config.in.u-boot	2019-03-19 16:10:57.306976193 -0400
+@@ -6,7 +6,7 @@
+ 	depends on CONFIG_DATAFLASH || CONFIG_FLASH || CONFIG_NANDFLASH
+ 	default "0x00008000" if CONFIG_FLASH
+ 	default "0x00008000" if CONFIG_DATAFLASH
+-	default "0x00040000" if CONFIG_NANDFLASH
++	default "0x01000000" if CONFIG_NANDFLASH		#DHeyman: Changed from 0x00040000
+ 	default	"0x00000000" if CONFIG_SDCARD
+ 	help
+ 
+diff -Naur --exclude '*bin' --exclude '*map' --exclude '*elf' --exclude '*pmecc' at91bootstrap3-v3.8.7/defconfig at91bootstrap3-v3.8.7-new/defconfig
+--- at91bootstrap3-v3.8.7/defconfig	1969-12-31 19:00:00.000000000 -0500
++++ at91bootstrap3-v3.8.7-new/defconfig	2019-03-19 16:02:19.426079617 -0400
+@@ -0,0 +1,7 @@
++CONFIG_AT91SAM9X5EK=y
++CONFIG_LPDDR1=y
++CONFIG_NANDFLASH=y
++# CONFIG_PMECC_AUTO_DETECT is not set
++CONFIG_PMECC_CORRECT_BITS_4=y
++CONFIG_DEBUG=y
++# CONFIG_SCLK is not set
